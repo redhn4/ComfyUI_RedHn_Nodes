@@ -1,0 +1,118 @@
+import torch
+import torch.nn.functional as F
+from PIL import Image, ImageDraw
+import numpy as np
+
+class RedHn_ExpandBorder_CN:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "图像": ("IMAGE",),
+                "扩展像素": ("INT", {"default": 1, "min": 1, "max": 512, "step": 1}),
+                "边框颜色": (["黑色", "白色"], {"default": "黑色"}),
+                "启用圆角": ("BOOLEAN", {"default": False, "label_on": "开", "label_off": "关"}),
+                "圆角半径": ("INT", {"default": 10, "min": 1, "max": 512, "step": 1}),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("图像",)
+    FUNCTION = "expand"
+    CATEGORY = "RedHn"
+
+    def expand(self, 图像, 扩展像素, 边框颜色, 启用圆角, 圆角半径):
+        B, H, W, C = 图像.shape
+        # 确定填充颜色（RGB）
+        if 边框颜色 == "黑色":
+            fill_value = 0.0
+            color_rgb = (0, 0, 0)
+        else:  # 白色
+            fill_value = 1.0
+            color_rgb = (255, 255, 255)
+
+        # 处理批次中的每张图
+        out_list = []
+        for i in range(B):
+            single_img = 图像[i]  # [H, W, C]
+            # 转换为 PIL
+            pil_img = Image.fromarray((single_img.cpu().numpy() * 255).astype(np.uint8), mode='RGB')
+
+            # 1. 如果启用圆角，先对原始图像应用圆角（角落填充边框颜色）
+            if 启用圆角:
+                # 创建圆角蒙版（白色内部，黑色角落）
+                mask = Image.new('L', pil_img.size, 0)
+                draw = ImageDraw.Draw(mask)
+                draw.rounded_rectangle([(0, 0), pil_img.size], radius=圆角半径, fill=255)
+                # 创建纯色背景（边框颜色）
+                bg = Image.new('RGB', pil_img.size, color_rgb)
+                # 合成：圆角区域显示原图，角落显示边框颜色
+                pil_img = Image.composite(pil_img, bg, mask)
+
+            # 2. 扩展边框（四周添加边框颜色）
+            # 创建扩展后的画布
+            new_w = pil_img.width + 2 * 扩展像素
+            new_h = pil_img.height + 2 * 扩展像素
+            canvas = Image.new('RGB', (new_w, new_h), color_rgb)
+            # 将图像粘贴到画布中心（偏移量 = 扩展像素）
+            canvas.paste(pil_img, (扩展像素, 扩展像素))
+            pil_img = canvas
+
+            # 转回张量
+            result_tensor = torch.from_numpy(np.array(pil_img).astype(np.float32) / 255.0)
+            out_list.append(result_tensor.unsqueeze(0))
+
+        out_batch = torch.cat(out_list, dim=0)
+        return (out_batch,)
+
+
+class RedHn_ExpandBorder_EN:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "expand_pixels": ("INT", {"default": 1, "min": 1, "max": 512, "step": 1}),
+                "border_color": (["Black", "White"], {"default": "Black"}),
+                "enable_round": ("BOOLEAN", {"default": False, "label_on": "on", "label_off": "off"}),
+                "round_radius": ("INT", {"default": 10, "min": 1, "max": 512, "step": 1}),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
+    FUNCTION = "expand"
+    CATEGORY = "RedHn"
+
+    def expand(self, image, expand_pixels, border_color, enable_round, round_radius):
+        B, H, W, C = image.shape
+        if border_color == "Black":
+            fill_value = 0.0
+            color_rgb = (0, 0, 0)
+        else:
+            fill_value = 1.0
+            color_rgb = (255, 255, 255)
+
+        out_list = []
+        for i in range(B):
+            single_img = image[i]
+            pil_img = Image.fromarray((single_img.cpu().numpy() * 255).astype(np.uint8), mode='RGB')
+
+            if enable_round:
+                mask = Image.new('L', pil_img.size, 0)
+                draw = ImageDraw.Draw(mask)
+                draw.rounded_rectangle([(0, 0), pil_img.size], radius=round_radius, fill=255)
+                bg = Image.new('RGB', pil_img.size, color_rgb)
+                pil_img = Image.composite(pil_img, bg, mask)
+
+            new_w = pil_img.width + 2 * expand_pixels
+            new_h = pil_img.height + 2 * expand_pixels
+            canvas = Image.new('RGB', (new_w, new_h), color_rgb)
+            canvas.paste(pil_img, (expand_pixels, expand_pixels))
+            pil_img = canvas
+
+            result_tensor = torch.from_numpy(np.array(pil_img).astype(np.float32) / 255.0)
+            out_list.append(result_tensor.unsqueeze(0))
+
+        out_batch = torch.cat(out_list, dim=0)
+        return (out_batch,)

@@ -10,7 +10,6 @@ from .redhn_save_image import RedHn_SaveImage_CN, RedHn_SaveImage_EN
 from .redhn_pixel_shrink import RedHn_PixelShrink_CN, RedHn_PixelShrink_EN
 from .redhn_grid_splitter import RedHn_GridSplitter_CN, RedHn_GridSplitter_EN
 from .redhn_aspect_ratio_size import RedHn_AspectRatioSize_CN, RedHn_AspectRatioSize_EN
-from .redhn_expand_border import RedHn_ExpandBorder_CN, RedHn_ExpandBorder_EN
 
 NODE_CLASS_MAPPINGS = {
     "RedHn快捷分辨率": RedHn_Quick_Resolution_CN,
@@ -35,8 +34,6 @@ NODE_CLASS_MAPPINGS = {
     "RedHn Grid Splitter": RedHn_GridSplitter_EN,
     "RedHn宽高比分辨率": RedHn_AspectRatioSize_CN,
     "RedHn Aspect Ratio Size": RedHn_AspectRatioSize_EN,
-    "RedHn扩展边框": RedHn_ExpandBorder_CN,
-    "RedHn Expand Border": RedHn_ExpandBorder_EN,
     **MV_MAPPINGS,
 }
 
@@ -63,8 +60,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "RedHn Grid Splitter": "RedHn Grid Splitter",
     "RedHn宽高比分辨率": "RedHn宽高比分辨率",
     "RedHn Aspect Ratio Size": "RedHn Aspect Ratio Size",
-    "RedHn扩展边框": "RedHn扩展边框",
-    "RedHn Expand Border": "RedHn Expand Border",
     **MV_DISPLAY,
 }
 
